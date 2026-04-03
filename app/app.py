@@ -9,7 +9,8 @@ import glob
 import argparse
 import subprocess
 
-SRC_DIR = os.path.join(os.path.dirname(__file__), "..", "src")
+APP_DIR = os.path.abspath(os.path.dirname(__file__))
+SRC_DIR = os.path.abspath(os.path.join(APP_DIR, "..", "src"))
 sys.path.insert(0, SRC_DIR)
 
 from config import get_config, MODES, midi_dirs_for_mode

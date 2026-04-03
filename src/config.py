@@ -32,7 +32,10 @@ RETRO_MIDI_DIR = _pick_existing_dir(
     os.path.join(MIDI_DIR, "retro"),
     os.path.join(MIDI_DIR, "RetroGame"),
 )
-MIXED_MIDI_DIR = os.path.join(MIDI_DIR, "mixed")
+MIXED_MIDI_DIR = _pick_existing_dir(
+    os.path.join(MIDI_DIR, "mixed"),
+    os.path.join(MIDI_DIR, "Mixed"),
+)
 
 # Output directories
 MODELS_DIR  = os.path.join(ROOT_DIR, "models")

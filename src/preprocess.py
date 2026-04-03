@@ -14,7 +14,8 @@ from typing import List, Dict, Tuple
 os.environ.setdefault("MUSIC21_BRAILLE_NO_AUTO_UPDATE", "1")
 
 from music21 import converter, instrument, note, chord
-sys.path.insert(0, os.path.dirname(__file__))
+SRC_DIR = os.path.abspath(os.path.dirname(__file__))
+sys.path.insert(0, SRC_DIR)
 from config import get_config, midi_dirs_for_mode, Config
 from utils import get_logger, save_vocab, save_sequences, set_seed, Timer
 

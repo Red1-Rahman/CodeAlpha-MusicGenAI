@@ -11,7 +11,8 @@ from typing import List
 
 import torch
 
-sys.path.insert(0, os.path.dirname(__file__))
+SRC_DIR = os.path.abspath(os.path.dirname(__file__))
+sys.path.insert(0, SRC_DIR)
 from config import get_config, Config, OUTPUTS_DIR
 from utils import get_logger, get_device, load_vocab, load_checkpoint, sample_token, Timer
 
