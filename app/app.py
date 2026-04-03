@@ -17,6 +17,30 @@ from utils import get_logger
 
 logger = get_logger("App")
 
+
+def apply_compatibility_wrapper() -> None:
+    """Translate legacy app invocations into the new --run format when possible."""
+    args = sys.argv[1:]
+
+    if not args:
+        return
+
+    if any(a in ("-h", "--help") for a in args):
+        return
+
+    has_run = any(a == "--run" or a.startswith("--run=") for a in args)
+    if has_run:
+        return
+
+    has_mode = any(a == "--mode" or a.startswith("--mode=") for a in args)
+    if has_mode:
+        print("[compat] Legacy command detected. Using '--run full_pipeline'.")
+        sys.argv.insert(1, "--run")
+        sys.argv.insert(2, "full_pipeline")
+
+
+apply_compatibility_wrapper()
+
 RESET = "\033[0m"
 BOLD = "\033[1m"
 CYAN = "\033[96m"
@@ -220,10 +244,16 @@ def run_noninteractive(mode: str, run: str) -> None:
         "preprocess": step_preprocess,
         "train": step_train,
         "generate": step_generate,
+        "full_pipeline": None,
     }
     if run not in steps:
-        print(c(f"Unknown --run value '{run}'. Use: preprocess | train | generate", RED))
+        print(c(f"Unknown --run value '{run}'. Use: preprocess | train | generate | full_pipeline", RED))
         sys.exit(1)
+    if run == "full_pipeline":
+        step_preprocess(mode)
+        step_train(mode)
+        step_generate(mode)
+        return
     steps[run](mode)
 
 
@@ -235,7 +265,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--mode", choices=list(MODES), default="mixed", help="Dataset mode to start with")
     parser.add_argument(
         "--run",
-        choices=["preprocess", "train", "generate"],
+        choices=["preprocess", "train", "generate", "full_pipeline"],
         default=None,
         help="Run a specific step without the interactive menu",
     )

@@ -370,13 +370,16 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--mode",
+        "--dataset",
+        "-m",
+        dest="mode",
         choices=["hiphop", "retro", "mixed"],
         default="mixed",
         help="Which dataset to train on",
     )
-    parser.add_argument("--epochs", type=int, default=None, help="Override number of training epochs")
-    parser.add_argument("--batch_size", type=int, default=None, help="Override batch size")
-    parser.add_argument("--lr", type=float, default=None, help="Override learning rate")
+    parser.add_argument("--epochs", "-e", type=int, default=None, help="Override number of training epochs")
+    parser.add_argument("--batch_size", "--batch", type=int, default=None, help="Override batch size")
+    parser.add_argument("--lr", "--learning_rate", type=float, default=None, help="Override learning rate")
     parser.add_argument("--resume", action="store_true", help="Resume from best checkpoint if available")
     return parser.parse_args()
 

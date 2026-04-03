@@ -251,15 +251,23 @@ def parse_args() -> argparse.Namespace:
         description="Generate music with a trained MusicLSTM.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    parser.add_argument("--mode", choices=["hiphop", "retro", "mixed"], default="mixed", help="Which trained model to use")
-    parser.add_argument("--num_tokens", type=int, default=None, help="Tokens to generate")
-    parser.add_argument("--temperature", type=float, default=None, help="Sampling temperature")
+    parser.add_argument(
+        "--mode",
+        "--dataset",
+        "-m",
+        dest="mode",
+        choices=["hiphop", "retro", "mixed"],
+        default="mixed",
+        help="Which trained model to use",
+    )
+    parser.add_argument("--num_tokens", "--length", "--len", dest="num_tokens", type=int, default=None, help="Tokens to generate")
+    parser.add_argument("--temperature", "--temp", dest="temperature", type=float, default=None, help="Sampling temperature")
     parser.add_argument("--top_k", type=int, default=None, help="Top-k sampling (0=off)")
     parser.add_argument("--top_p", type=float, default=None, help="Nucleus sampling (1.0=off)")
     parser.add_argument("--bpm", type=int, default=None, help="Output MIDI BPM")
     parser.add_argument("--seed_length", type=int, default=None, help="Seed sequence length")
     parser.add_argument("--seed_file", type=str, default=None, help="Path to a seed MIDI file")
-    parser.add_argument("--output_dir", type=str, default=None, help="Where to save the MIDI")
+    parser.add_argument("--output_dir", "--out", dest="output_dir", type=str, default=None, help="Where to save the MIDI")
     return parser.parse_args()
 
 
