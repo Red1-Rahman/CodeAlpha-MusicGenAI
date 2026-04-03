@@ -1,24 +1,117 @@
+"""
+config.py
+Central configuration for the Music Generation project.
+All paths, model hyperparameters, and training settings live here.
+"""
+
 import os
-import torch
+from dataclasses import dataclass, field
+from typing import Optional
 
-# Directory configuration
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA_DIR = os.path.join(BASE_DIR, "data", "MIDI")
-PROCESSED_DIR = os.path.join(BASE_DIR, "data", "processed")
-MODELS_DIR = os.path.join(BASE_DIR, "models")
-OUTPUTS_DIR = os.path.join(BASE_DIR, "outputs")
+# Project root (one level above src/)
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
-# Ensure output directories exist
-os.makedirs(PROCESSED_DIR, exist_ok=True)
-os.makedirs(MODELS_DIR, exist_ok=True)
-os.makedirs(OUTPUTS_DIR, exist_ok=True)
+# Data directories
+DATA_DIR       = os.path.join(ROOT_DIR, "data")
+MIDI_DIR       = os.path.join(DATA_DIR, "MIDI")
+PROCESSED_DIR  = os.path.join(DATA_DIR, "processed")
 
-# Hyperparameters
-SEQ_LENGTH = 50 #number of previous notes to consider for predicting the next note
-BATCH_SIZE = 64
-EPOCHS = 50
-LEARNING_RATE = 0.001
-EMBED_SIZE = 256
-HIDDEN_SIZE = 512
+HIPHOP_MIDI_DIR  = os.path.join(MIDI_DIR, "HipHop")
+RETRO_MIDI_DIR   = os.path.join(MIDI_DIR, "RetroGame")
 
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# Output directories
+MODELS_DIR  = os.path.join(ROOT_DIR, "models")
+OUTPUTS_DIR = os.path.join(ROOT_DIR, "outputs")
+
+# Auto-create dirs at import time
+for _d in [PROCESSED_DIR, MODELS_DIR, OUTPUTS_DIR]:
+    os.makedirs(_d, exist_ok=True)
+
+# Supported modes
+MODES = ("hiphop", "retro", "mixed")
+
+# Preprocessing
+@dataclass
+class PreprocessConfig:
+    sequence_length: int = 64
+    min_notes: int = 20
+    transpose_semitones: list = field(default_factory=lambda: [-2, -1, 0, 1, 2])
+    include_chords: bool = True
+    duration_buckets: tuple = (0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0)
+
+# Model
+@dataclass
+class ModelConfig:
+    hidden_size: int = 512
+    num_layers: int = 3
+    embedding_dim: int = 256
+    dropout: float = 0.3
+    bidirectional: bool = False  # keep False for autoregressive generation
+
+# Training
+@dataclass
+class TrainConfig:
+    epochs: int = 100
+    batch_size: int = 64
+    learning_rate: float = 0.001
+    weight_decay: float = 1e-5
+    lr_scheduler: str = "cosine"
+    lr_step_size: int = 20      
+    lr_gamma: float = 0.5       
+    save_every: int = 10
+    early_stop_patience: int = 15
+    grad_clip: float = 5.0
+    use_amp: bool = True
+    seed: int = 42
+    num_workers: int = 0  # Set to 0 for Windows compatibility, 4 for Linux/Mac
+    val_split: float = 0.1
+
+# Generation
+@dataclass
+class GenerateConfig:
+    num_tokens: int = 256
+    seed_length: int = 32
+    temperature: float = 1.0
+    top_k: int = 10
+    top_p: float = 0.9
+    bpm: int = 90
+    instrument_program: int = 0
+    output_prefix: str = "generated"
+
+# Convenience: bundle everything
+@dataclass
+class Config:
+    mode: str = "mixed"
+    preprocess: PreprocessConfig = field(default_factory=PreprocessConfig)
+    model: ModelConfig = field(default_factory=ModelConfig)
+    train: TrainConfig = field(default_factory=TrainConfig)
+    generate: GenerateConfig = field(default_factory=GenerateConfig)
+
+    processed_path: str = ""
+    vocab_path: str = ""
+    checkpoint_dir: str = ""
+    best_checkpoint: str = ""
+
+    def __post_init__(self):
+        self._refresh_paths()
+
+    def _refresh_paths(self):
+        self.processed_path = os.path.join(PROCESSED_DIR, f"{self.mode}_sequences.pkl")
+        self.vocab_path      = os.path.join(PROCESSED_DIR, f"{self.mode}_vocab.pkl")
+        self.checkpoint_dir  = os.path.join(MODELS_DIR,   self.mode)
+        self.best_checkpoint = os.path.join(self.checkpoint_dir, "best_model.pt")
+        os.makedirs(self.checkpoint_dir, exist_ok=True)
+
+def get_config(mode: str = "mixed") -> Config:
+    assert mode in MODES, f"mode must be one of {MODES}, got '{mode}'"
+    cfg = Config(mode=mode)
+    cfg._refresh_paths()
+    return cfg
+
+def midi_dirs_for_mode(mode: str) -> list:
+    mapping = {
+        "hiphop": [HIPHOP_MIDI_DIR],
+        "retro":  [RETRO_MIDI_DIR],
+        "mixed":  [HIPHOP_MIDI_DIR, RETRO_MIDI_DIR],
+    }
+    return mapping[mode]
