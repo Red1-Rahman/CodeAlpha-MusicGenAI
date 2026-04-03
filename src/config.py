@@ -16,8 +16,23 @@ DATA_DIR       = os.path.join(ROOT_DIR, "data")
 MIDI_DIR       = os.path.join(DATA_DIR, "MIDI")
 PROCESSED_DIR  = os.path.join(DATA_DIR, "processed")
 
-HIPHOP_MIDI_DIR  = os.path.join(MIDI_DIR, "HipHop")
-RETRO_MIDI_DIR   = os.path.join(MIDI_DIR, "RetroGame")
+def _pick_existing_dir(*candidates: str) -> str:
+    """Return the first existing path from candidates, else the first candidate."""
+    for path in candidates:
+        if os.path.isdir(path):
+            return path
+    return candidates[0]
+
+
+HIPHOP_MIDI_DIR = _pick_existing_dir(
+    os.path.join(MIDI_DIR, "hiphop"),
+    os.path.join(MIDI_DIR, "HipHop"),
+)
+RETRO_MIDI_DIR = _pick_existing_dir(
+    os.path.join(MIDI_DIR, "retro"),
+    os.path.join(MIDI_DIR, "RetroGame"),
+)
+MIXED_MIDI_DIR = os.path.join(MIDI_DIR, "mixed")
 
 # Output directories
 MODELS_DIR  = os.path.join(ROOT_DIR, "models")
@@ -109,9 +124,13 @@ def get_config(mode: str = "mixed") -> Config:
     return cfg
 
 def midi_dirs_for_mode(mode: str) -> list:
+    if mode == "mixed":
+        if os.path.isdir(MIXED_MIDI_DIR):
+            return [MIXED_MIDI_DIR]
+        return [HIPHOP_MIDI_DIR, RETRO_MIDI_DIR]
+
     mapping = {
         "hiphop": [HIPHOP_MIDI_DIR],
         "retro":  [RETRO_MIDI_DIR],
-        "mixed":  [HIPHOP_MIDI_DIR, RETRO_MIDI_DIR],
     }
     return mapping[mode]
