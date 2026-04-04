@@ -145,9 +145,12 @@ def tokens_to_midi_stream(
     part.append(tempo.MetronomeMark(number=bpm))
 
     for ev_tok, dur_ql in events:
-        ql = max(dur_ql, 0.25)
+        ql = max(dur_ql, 0.125)
         if ev_tok == "REST":
-            part.append(note.Rest(quarterLength=ql))
+            # Keep only very short rests to avoid silence accumulation.
+            if ql <= 0.5:
+                part.append(note.Rest(quarterLength=ql))
+            continue
         elif "." in ev_tok:
             try:
                 pitches = [int(p) for p in ev_tok.split(".")]
