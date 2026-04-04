@@ -236,6 +236,7 @@ function collectGenerateOptions() {
     bpm:          parseNum($("genBpm").value,     Number.parseInt),
     seed_length:  parseNum($("genSeedLen").value, Number.parseInt),
     seed_file:    $("genSeedFile").value.trim() || null,
+    output_filename: $("genOutputFilename").value.trim() || null,
   };
 }
 

@@ -236,8 +236,16 @@ def generate(mode: str, args: argparse.Namespace) -> None:
         instrument_program=gc.instrument_program,
     )
 
-    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    output_name = f"{gc.output_prefix}_{mode}_{timestamp}.mid"
+    output_name = None
+    if args.output_filename:
+        output_name = os.path.basename(args.output_filename.strip())
+        if output_name and not output_name.lower().endswith((".mid", ".midi")):
+            output_name += ".mid"
+
+    if not output_name:
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        output_name = f"{gc.output_prefix}_{mode}_{timestamp}.mid"
+
     output_path = os.path.join(args.output_dir or OUTPUTS_DIR, output_name)
     save_midi(score, output_path)
 
@@ -271,6 +279,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--bpm", type=int, default=None, help="Output MIDI BPM")
     parser.add_argument("--seed_length", type=int, default=None, help="Seed sequence length")
     parser.add_argument("--seed_file", type=str, default=None, help="Path to a seed MIDI file")
+    parser.add_argument("--output_filename", type=str, default=None, help="Optional output MIDI filename")
     parser.add_argument("--output_dir", "--out", dest="output_dir", type=str, default=None, help="Where to save the MIDI")
     return parser.parse_args()
 

@@ -46,6 +46,7 @@ class GenerateOptions(BaseModel):
     bpm: Optional[int] = Field(default=None, ge=30, le=300)
     seed_length: Optional[int] = Field(default=None, ge=1)
     seed_file: Optional[str] = None
+    output_filename: Optional[str] = None
 
 
 class JobRequest(BaseModel):
@@ -109,6 +110,8 @@ def _build_steps(req: JobRequest) -> List[List[str]]:
             cmd.extend(["--seed_length", str(req.generate.seed_length)])
         if req.generate.seed_file:
             cmd.extend(["--seed_file", req.generate.seed_file])
+        if req.generate.output_filename:
+            cmd.extend(["--output_filename", req.generate.output_filename])
         return cmd
 
     if req.action == "preprocess":
