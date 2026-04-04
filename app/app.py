@@ -115,6 +115,14 @@ def step_generate(mode: str, extra=None) -> None:
     print(c("  Generation complete.", GREEN) if rc == 0 else c("  Generation failed!", RED))
 
 
+def step_web(host: str, port: int, reload_server: bool = False) -> None:
+    script = os.path.join(APP_DIR, "web_server.py")
+    args = ["--host", host, "--port", str(port)]
+    if reload_server:
+        args.append("--reload")
+    run_step(script, args)
+
+
 BANNER = f"""
 {c('=======================================', CYAN)}
 {c('      AI Music Generator CLI', BOLD)}
@@ -130,6 +138,7 @@ MENU = f"""
   {c('4', YELLOW)} - Full pipeline (preprocess -> train -> generate)
   {c('5', YELLOW)} - Change mode (current: {{mode}})
   {c('6', YELLOW)} - Show status
+    {c('7', YELLOW)} - Launch web dashboard
   {c('q', YELLOW)} - Quit
 """
 
@@ -233,6 +242,9 @@ def run_menu(mode: str) -> None:
             print(c(f"  Mode changed to: {mode}", GREEN))
         elif choice == "6":
             print_status(mode)
+        elif choice == "7":
+            print(c("  Starting web dashboard on http://127.0.0.1:8000", GREEN))
+            step_web("127.0.0.1", 8000)
         elif choice in ("q", "quit", "exit"):
             print("Bye!")
             break
@@ -240,20 +252,24 @@ def run_menu(mode: str) -> None:
             print(c("  Unknown option.", RED))
 
 
-def run_noninteractive(mode: str, run: str) -> None:
+def run_noninteractive(mode: str, run: str, host: str, port: int, web_reload: bool) -> None:
     steps = {
         "preprocess": step_preprocess,
         "train": step_train,
         "generate": step_generate,
         "full_pipeline": None,
+        "web": None,
     }
     if run not in steps:
-        print(c(f"Unknown --run value '{run}'. Use: preprocess | train | generate | full_pipeline", RED))
+        print(c(f"Unknown --run value '{run}'. Use: preprocess | train | generate | full_pipeline | web", RED))
         sys.exit(1)
     if run == "full_pipeline":
         step_preprocess(mode)
         step_train(mode)
         step_generate(mode)
+        return
+    if run == "web":
+        step_web(host, port, reload_server=web_reload)
         return
     steps[run](mode)
 
@@ -266,16 +282,19 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--mode", choices=list(MODES), default="mixed", help="Dataset mode to start with")
     parser.add_argument(
         "--run",
-        choices=["preprocess", "train", "generate", "full_pipeline"],
+        choices=["preprocess", "train", "generate", "full_pipeline", "web"],
         default=None,
         help="Run a specific step without the interactive menu",
     )
+    parser.add_argument("--host", default="127.0.0.1", help="Host for --run web")
+    parser.add_argument("--port", type=int, default=8000, help="Port for --run web")
+    parser.add_argument("--web_reload", action="store_true", help="Enable auto-reload for --run web")
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     args = parse_args()
     if args.run:
-        run_noninteractive(args.mode, args.run)
+        run_noninteractive(args.mode, args.run, args.host, args.port, args.web_reload)
     else:
         run_menu(args.mode)

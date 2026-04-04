@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MusicGen Dashboard</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="bg-grid" aria-hidden="true"></div>
+    <main class="container">
+      <header class="hero card">
+        <div>
+          <p class="eyebrow">CodeAlpha MusicGen</p>
+          <h1>Music Generation Control Plane</h1>
+          <p class="subtitle">Run preprocess, train, and generation from a premium web UI built for long-running jobs.</p>
+        </div>
+        <div class="accent-panel">
+          <label for="accentSelect">Accent</label>
+          <select id="accentSelect">
+            <option value="sunset">Sunset Orange</option>
+            <option value="amber">Amber Gold</option>
+            <option value="tangerine">Tangerine Flame</option>
+          </select>
+        </div>
+      </header>
+
+      <section class="grid two">
+        <article class="card">
+          <h2>Project Status</h2>
+          <div class="row">
+            <label for="modeSelect">Mode</label>
+            <select id="modeSelect">
+              <option value="hiphop">hiphop</option>
+              <option value="retro">retro</option>
+              <option value="mixed" selected>mixed</option>
+            </select>
+            <button id="refreshStatusBtn" class="btn ghost">Refresh</button>
+          </div>
+          <dl id="statusPanel" class="status"></dl>
+        </article>
+
+        <article class="card">
+          <h2>Run Action</h2>
+          <div class="button-grid">
+            <button class="btn" data-action="preprocess">Preprocess</button>
+            <button class="btn" data-action="train">Train</button>
+            <button class="btn" data-action="generate">Generate</button>
+            <button class="btn" data-action="full_pipeline">Full Pipeline</button>
+          </div>
+          <p id="runHint" class="hint">Only one job can run at a time to avoid GPU and checkpoint conflicts.</p>
+        </article>
+      </section>
+
+      <section class="grid two">
+        <article class="card">
+          <h2>Train Options</h2>
+          <div class="form-grid">
+            <label><input id="trainResume" type="checkbox" /> Resume checkpoint</label>
+            <label>Epochs <input id="trainEpochs" type="number" min="1" placeholder="default" /></label>
+            <label>Batch size <input id="trainBatch" type="number" min="1" placeholder="default" /></label>
+            <label>Learning rate <input id="trainLr" type="number" min="0" step="0.0001" placeholder="default" /></label>
+          </div>
+        </article>
+
+        <article class="card">
+          <h2>Generate Options</h2>
+          <div class="form-grid">
+            <label>Num tokens <input id="genTokens" type="number" min="1" placeholder="256" /></label>
+            <label>Temperature <input id="genTemp" type="number" min="0" step="0.1" placeholder="1.0" /></label>
+            <label>Top-k <input id="genTopK" type="number" min="0" placeholder="10" /></label>
+            <label>Top-p <input id="genTopP" type="number" min="0" max="1" step="0.01" placeholder="0.9" /></label>
+            <label>BPM <input id="genBpm" type="number" min="30" max="300" placeholder="90" /></label>
+            <label>Seed length <input id="genSeedLen" type="number" min="1" placeholder="32" /></label>
+            <label>Seed MIDI file path <input id="genSeedFile" type="text" placeholder="optional absolute path" /></label>
+          </div>
+        </article>
+      </section>
+
+      <section class="grid two">
+        <article class="card">
+          <h2>Jobs</h2>
+          <div id="jobsPanel" class="jobs"></div>
+        </article>
+
+        <article class="card logs">
+          <h2>Live Logs</h2>
+          <p id="activeJob" class="hint">Select a job to stream logs.</p>
+          <pre id="logsPanel">No logs yet.</pre>
+        </article>
+      </section>
+    </main>
+
+    <script src="/static/app.js" defer></script>
+  </body>
+</html>
