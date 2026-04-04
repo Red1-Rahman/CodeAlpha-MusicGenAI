@@ -1,5 +1,5 @@
 /* ────────────────────────────────────────────────────────────────────────
-   MusicGen Dashboard — app.js
+   MusicGenAI Dashboard — app.js
    ────────────────────────────────────────────────────────────────────── */
 
 "use strict";
@@ -12,6 +12,8 @@ const state = {
   playerFiles: [],
   playerIndex: 0,
   playerIsPlaying: false,
+  toneSynth: null,
+  toneScheduledIds: [],
 };
 
 /* ── DOM refs ─────────────────────────────────────────────────────────── */
@@ -33,30 +35,41 @@ const nowPlayingName  = $("nowPlayingName");
 const waveform        = $("waveform");
 const playerMeta      = $("playerMeta");
 
-/* ── Accent colours ───────────────────────────────────────────────────── */
+/* ── Accent picker ────────────────────────────────────────────────────── */
 const ACCENTS = {
-  sunset:    { accent: "#ff8a3d", strong: "#ff7a1a", glow: "rgba(255,138,61,.35)"  },
-  amber:     { accent: "#ff9e2c", strong: "#e88a00", glow: "rgba(255,158,44,.35)"  },
-  tangerine: { accent: "#f97316", strong: "#ea580c", glow: "rgba(249,115,22,.35)"  },
-  rose:      { accent: "#fb7185", strong: "#f43f5e", glow: "rgba(251,113,133,.35)" },
-  cyan:      { accent: "#22d3ee", strong: "#06b6d4", glow: "rgba(34,211,238,.35)"  },
+  orange: {
+    accent: "#ea580c",
+    hover: "#c2410c",
+    dim: "rgba(234,88,12,.12)",
+    glow: "rgba(234,88,12,.35)",
+  },
+  cyan: {
+    accent: "#22d3ee",
+    hover: "#0891b2",
+    dim: "rgba(34,211,238,.12)",
+    glow: "rgba(34,211,238,.35)",
+  },
 };
 
 function applyAccent(name) {
-  const t = ACCENTS[name] || ACCENTS.sunset;
-  const r = document.documentElement.style;
-  r.setProperty("--accent",      t.accent);
-  r.setProperty("--accent-dim",  t.glow.replace(".35", ".12"));
-  r.setProperty("--accent-glow", t.glow);
+  const tone = ACCENTS[name] || ACCENTS.orange;
+  const root = document.documentElement.style;
+  root.setProperty("--accent", tone.accent);
+  root.setProperty("--accent-hover", tone.hover);
+  root.setProperty("--accent-dim", tone.dim);
+  root.setProperty("--accent-glow", tone.glow);
 }
 
-document.getElementById("swatchRow").addEventListener("click", (e) => {
-  const btn = e.target.closest(".swatch");
-  if (!btn) return;
-  document.querySelectorAll(".swatch").forEach(s => s.classList.remove("swatch--active"));
-  btn.classList.add("swatch--active");
-  applyAccent(btn.dataset.accent);
-});
+const swatchRow = $("swatchRow");
+if (swatchRow) {
+  swatchRow.addEventListener("click", (e) => {
+    const btn = e.target.closest(".swatch");
+    if (!btn) return;
+    swatchRow.querySelectorAll(".swatch").forEach((s) => s.classList.remove("swatch--active"));
+    btn.classList.add("swatch--active");
+    applyAccent(btn.dataset.accent);
+  });
+}
 
 /* ── Mode pills ────────────────────────────────────────────────────────── */
 document.getElementById("modePills").addEventListener("click", (e) => {
@@ -257,25 +270,102 @@ document.querySelectorAll("button[data-action]").forEach(btn => {
 $("refreshStatusBtn").addEventListener("click", refreshStatus);
 
 /* ── MIDI Player ────────────────────────────────────────────────────────── */
-// We use MIDI.js via CDN for playback. Since it requires a complex setup,
-// we implement a lightweight approach using the Web MIDI API if available,
-// with a fallback to listing files for download.
-// The player UI shows generated MIDI files from /api/outputs and lets you
-// "play" them (toggling waveform animation) — actual audio playback
-// requires the backend to expose a /api/outputs endpoint or uses the
-// browser's built-in MIDI support if the OS has a MIDI synth.
+function outputFileUrl(file) {
+  return `/api/outputs/${encodeURIComponent(basename(file))}`;
+}
+
+function setDownloadFallback(file, message) {
+  if (!file) {
+    playerMeta.textContent = message || "No file selected.";
+    return;
+  }
+  playerMeta.innerHTML = `${message || "Download fallback:"} <a href="${outputFileUrl(file)}" download style="color:var(--accent);text-decoration:none;">⬇ ${basename(file)}</a>`;
+}
+
+function clearToneSchedule() {
+  if (!window.Tone) return;
+  state.toneScheduledIds.forEach((id) => window.Tone.Transport.clear(id));
+  state.toneScheduledIds = [];
+  window.Tone.Transport.cancel();
+}
+
+async function ensureToneReady() {
+  if (!window.Tone || !window.Midi) {
+    throw new Error("Tone.js or @tonejs/midi not loaded");
+  }
+  await window.Tone.start();
+  if (!state.toneSynth) {
+    state.toneSynth = new window.Tone.PolySynth(window.Tone.Synth, {
+      oscillator: { type: "triangle" },
+      envelope: { attack: 0.01, decay: 0.2, sustain: 0.25, release: 0.6 },
+    }).toDestination();
+  }
+}
+
+async function playSelectedMidi() {
+  const file = state.playerFiles[state.playerIndex];
+  if (!file) return;
+
+  await ensureToneReady();
+  clearToneSchedule();
+  window.Tone.Transport.stop();
+  window.Tone.Transport.position = 0;
+
+  const res = await fetch(outputFileUrl(file));
+  if (!res.ok) {
+    throw new Error(`Could not load MIDI (${res.status})`);
+  }
+
+  const arrayBuffer = await res.arrayBuffer();
+  const midi = new window.Midi(arrayBuffer);
+  const firstTempo = midi.header?.tempos?.[0]?.bpm;
+  if (firstTempo && Number.isFinite(firstTempo)) {
+    window.Tone.Transport.bpm.value = firstTempo;
+  }
+
+  let hasNotes = false;
+  let endTime = 0;
+
+  midi.tracks.forEach((track) => {
+    track.notes.forEach((note) => {
+      hasNotes = true;
+      const start = Math.max(note.time, 0);
+      const duration = Math.max(note.duration, 0.03);
+      const velocity = Number.isFinite(note.velocity) ? note.velocity : 0.8;
+
+      const id = window.Tone.Transport.schedule((time) => {
+        state.toneSynth.triggerAttackRelease(note.name, duration, time, velocity);
+      }, start);
+      state.toneScheduledIds.push(id);
+      endTime = Math.max(endTime, start + duration);
+    });
+  });
+
+  if (!hasNotes) {
+    throw new Error("MIDI has no playable notes");
+  }
+
+  state.toneScheduledIds.push(
+    window.Tone.Transport.schedule(() => {
+      stopPlayer();
+    }, endTime + 0.05),
+  );
+
+  window.Tone.Transport.start("+0.02");
+  startPlayer();
+  setDownloadFallback(file, "Download fallback:");
+}
 
 async function refreshPlayerFiles() {
   try {
     const data = await fetchJson("/api/outputs");
     state.playerFiles = data.files || [];
+    if (state.playerIndex >= state.playerFiles.length) {
+      state.playerIndex = Math.max(0, state.playerFiles.length - 1);
+    }
     renderPlayerFiles();
   } catch {
-    // /api/outputs may not exist yet — that's ok
-    playerMeta.innerHTML = `
-      Add <code>/api/outputs</code> to <code>web_server.py</code> to list generated files here.
-      See the Copilot prompt below for implementation details.
-    `;
+    playerMeta.textContent = "Could not load output MIDI files.";
   }
 }
 
@@ -308,16 +398,18 @@ function updateNowPlaying() {
   nowPlayingName.textContent = file ? basename(file) : "No file selected";
 
   if (file) {
-    playerMeta.innerHTML = `
-      <a href="/api/outputs/${encodeURIComponent(basename(file))}" download style="color:var(--accent);text-decoration:none;">
-        ⬇ Download ${basename(file)}
-      </a>
-    `;
+    setDownloadFallback(file, "Download fallback:");
+  } else {
+    playerMeta.textContent = "No file selected.";
   }
 }
 
 function stopPlayer() {
   state.playerIsPlaying = false;
+  if (window.Tone) {
+    window.Tone.Transport.stop();
+    window.Tone.Transport.position = 0;
+  }
   playerPlay.innerHTML = "&#9654;";
   waveform.classList.remove("playing");
 }
@@ -328,55 +420,58 @@ function startPlayer() {
   waveform.classList.add("playing");
 }
 
-playerPlay.addEventListener("click", () => {
+playerPlay.addEventListener("click", async () => {
   if (state.playerFiles.length === 0) return;
   if (state.playerIsPlaying) {
     stopPlayer();
   } else {
-    startPlayer();
-    // Browser MIDI playback: open the file download link in a new tab
-    // for actual audio, a synthesiser library (e.g. MIDI.js, Tone.js + MIDI)
-    // must be loaded. See Copilot prompt for full implementation.
-    const file = state.playerFiles[state.playerIndex];
-    if (file) {
-      // Attempt native MIDI via <audio> — works if OS MIDI synth present
-      const audio = new Audio(`/api/outputs/${encodeURIComponent(basename(file))}`);
-      audio.onended = stopPlayer;
-      audio.play().catch(() => {
-        // No synth — show download link hint
-        playerMeta.innerHTML = `No MIDI synth detected. <a href="/api/outputs/${encodeURIComponent(basename(file))}" download style="color:var(--accent)">Download and open in a DAW</a>.`;
-        stopPlayer();
-      });
-      state._audio = audio;
+    try {
+      await playSelectedMidi();
+    } catch (err) {
+      const file = state.playerFiles[state.playerIndex];
+      const message = err?.message || "Playback unavailable";
+      stopPlayer();
+      setDownloadFallback(file, `${message}. Download fallback:`);
     }
   }
 });
 
-playerPlay.addEventListener("click", () => {
-  if (state._audio && !state.playerIsPlaying) {
-    state._audio.pause();
-    state._audio.currentTime = 0;
-  }
-});
-
-playerPrev.addEventListener("click", () => {
+playerPrev.addEventListener("click", async () => {
   if (state.playerFiles.length === 0) return;
+  const wasPlaying = state.playerIsPlaying;
   stopPlayer();
   state.playerIndex = (state.playerIndex - 1 + state.playerFiles.length) % state.playerFiles.length;
   renderPlayerFiles();
+  if (wasPlaying) {
+    try {
+      await playSelectedMidi();
+    } catch (err) {
+      const file = state.playerFiles[state.playerIndex];
+      setDownloadFallback(file, `${err?.message || "Playback unavailable"}. Download fallback:`);
+    }
+  }
 });
 
-playerNext.addEventListener("click", () => {
+playerNext.addEventListener("click", async () => {
   if (state.playerFiles.length === 0) return;
+  const wasPlaying = state.playerIsPlaying;
   stopPlayer();
   state.playerIndex = (state.playerIndex + 1) % state.playerFiles.length;
   renderPlayerFiles();
+  if (wasPlaying) {
+    try {
+      await playSelectedMidi();
+    } catch (err) {
+      const file = state.playerFiles[state.playerIndex];
+      setDownloadFallback(file, `${err?.message || "Playback unavailable"}. Download fallback:`);
+    }
+  }
 });
 
 /* ── Bootstrap ──────────────────────────────────────────────────────────── */
 async function bootstrap() {
   drawGrid();
-  applyAccent("sunset");
+  applyAccent("orange");
 
   await checkHealth();
   await refreshStatus();

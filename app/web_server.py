@@ -23,6 +23,7 @@ ROOT_DIR = os.path.abspath(os.path.join(APP_DIR, ".."))
 SRC_DIR = os.path.abspath(os.path.join(ROOT_DIR, "src"))
 WEB_DIR = os.path.abspath(os.path.join(APP_DIR, "web"))
 WEB_LOG_DIR = os.path.abspath(os.path.join(ROOT_DIR, "outputs", "web_logs"))
+OUTPUTS_DIR = os.path.abspath(os.path.join(ROOT_DIR, "outputs"))
 os.makedirs(WEB_LOG_DIR, exist_ok=True)
 
 sys.path.insert(0, SRC_DIR)
@@ -340,6 +341,42 @@ def get_job_logs(job_id: str, tail: int = Query(default=200, ge=1, le=2000)) -> 
         job = _jobs[job_id]
         lines = list(job["logs"])[-tail:]
     return {"id": job_id, "lines": lines}
+
+
+@app.get("/api/outputs")
+def list_outputs() -> Dict[str, List[str]]:
+    os.makedirs(OUTPUTS_DIR, exist_ok=True)
+
+    entries: List[tuple] = []
+    for pattern in ("*.mid", "*.midi"):
+        for path in glob.glob(os.path.join(OUTPUTS_DIR, pattern)):
+            if os.path.isfile(path):
+                entries.append((os.path.getmtime(path), os.path.basename(path)))
+
+    entries.sort(key=lambda item: item[0], reverse=True)
+    files = [name for _, name in entries]
+    return {"files": files}
+
+
+@app.get("/api/outputs/{filename}")
+def get_output_file(filename: str) -> FileResponse:
+    os.makedirs(OUTPUTS_DIR, exist_ok=True)
+
+    # Only allow file names from the outputs root; reject traversal attempts.
+    if filename != os.path.basename(filename):
+        raise HTTPException(status_code=400, detail="Invalid filename")
+
+    requested_path = os.path.abspath(os.path.join(OUTPUTS_DIR, filename))
+    if os.path.commonpath([OUTPUTS_DIR, requested_path]) != OUTPUTS_DIR:
+        raise HTTPException(status_code=400, detail="Invalid filename")
+
+    if not os.path.isfile(requested_path):
+        raise HTTPException(status_code=404, detail="Output file not found")
+
+    if not requested_path.lower().endswith((".mid", ".midi")):
+        raise HTTPException(status_code=400, detail="Only MIDI files are supported")
+
+    return FileResponse(requested_path, media_type="audio/midi", filename=filename)
 
 
 if __name__ == "__main__":

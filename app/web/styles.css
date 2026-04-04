@@ -9,9 +9,11 @@
   --text:         #dce8f5;
   --text-muted:   #5a7a9a;
   --text-dim:     #3a5570;
-  --accent:       #ff8a3d;
-  --accent-dim:   rgba(255,138,61,.12);
-  --accent-glow:  rgba(255,138,61,.35);
+  --accent-orange:#ea580c;
+  --accent-hover: #c2410c;
+  --accent:       var(--accent-orange);
+  --accent-dim:   rgba(234,88,12,.12);
+  --accent-glow:  rgba(234,88,12,.35);
   --ok:           #34d399;
   --ok-dim:       rgba(52,211,153,.12);
   --err:          #f87171;
@@ -126,7 +128,7 @@ html, body {
   width: 38px;
   height: 38px;
   background: var(--accent-dim);
-  border: 1px solid rgba(255,138,61,.3);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
   border-radius: 10px;
   display: flex;
   align-items: center;
@@ -229,7 +231,7 @@ html, body {
 }
 .mode-pill--active {
   background: var(--accent-dim);
-  border-color: rgba(255,138,61,.3);
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
   color: var(--accent);
 }
 
@@ -270,7 +272,7 @@ html, body {
 }
 @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
-/* Swatches */
+/* Accent picker */
 .swatch-row {
   display: flex;
   gap: 8px;
@@ -331,7 +333,7 @@ html, body {
   cursor: pointer;
   transition: all var(--transition);
 }
-.icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+.icon-btn:hover { border-color: var(--accent-hover); color: var(--accent-hover); }
 .icon-btn.spinning svg { animation: spin .6s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -417,17 +419,21 @@ html, body {
 }
 
 .pipeline-btn:hover {
-  border-color: rgba(255,138,61,.4);
+  border-color: var(--accent-hover);
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0,0,0,.4), 0 0 0 1px rgba(255,138,61,.1);
+  box-shadow: 0 8px 24px rgba(0,0,0,.4), 0 0 0 1px color-mix(in srgb, var(--accent) 10%, transparent);
 }
 .pipeline-btn:hover::before { opacity: 1; }
 .pipeline-btn:active { transform: translateY(0); }
 
 .pipeline-btn--full {
   grid-column: span 1;
-  background: linear-gradient(135deg, rgba(255,138,61,.15), rgba(255,138,61,.05));
-  border-color: rgba(255,138,61,.3);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--accent) 15%, transparent),
+    color-mix(in srgb, var(--accent) 5%, transparent)
+  );
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
 }
 
 .pipeline-btn__icon {
@@ -529,11 +535,12 @@ html, body {
   font-size: 12px;
   outline: none;
   transition: border-color var(--transition), box-shadow var(--transition);
+  appearance: none;
   -webkit-appearance: none;
 }
 .opt-input::placeholder { color: var(--text-dim); }
 .opt-input:focus {
-  border-color: rgba(255,138,61,.5);
+  border-color: color-mix(in srgb, var(--accent) 50%, transparent);
   box-shadow: 0 0 0 3px var(--accent-dim);
 }
 
@@ -616,7 +623,7 @@ html, body {
 }
 .job-item:hover { border-color: var(--border-hi); }
 .job-item.active {
-  border-color: rgba(255,138,61,.4);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
   background: var(--accent-dim);
 }
 
@@ -697,7 +704,7 @@ html, body {
   text-transform: uppercase;
   color: var(--accent);
   background: var(--accent-dim);
-  border: 1px solid rgba(255,138,61,.25);
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
   padding: 2px 8px;
   border-radius: 999px;
 }
@@ -737,12 +744,12 @@ html, body {
   text-overflow: ellipsis;
 }
 .player-file-chip:hover {
-  border-color: rgba(255,138,61,.4);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
   color: var(--text);
 }
 .player-file-chip.active {
   background: var(--accent-dim);
-  border-color: rgba(255,138,61,.4);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
   color: var(--accent);
 }
 
@@ -828,13 +835,13 @@ html, body {
   cursor: pointer;
   transition: all var(--transition);
 }
-.player-btn:hover { border-color: var(--accent); color: var(--accent); }
+.player-btn:hover { border-color: var(--accent-hover); color: var(--accent-hover); }
 
 .player-btn--play {
   width: 44px; height: 44px;
   font-size: 16px;
   background: var(--accent-dim);
-  border-color: rgba(255,138,61,.4);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
   color: var(--accent);
 }
 .player-btn--play:hover {

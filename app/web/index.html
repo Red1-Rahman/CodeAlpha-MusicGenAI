@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MusicGen — AL-CODIST</title>
+    <title>MusicGenAI — AL-CODIST</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
@@ -31,7 +31,7 @@
           </div>
           <div>
             <p class="brand-eyebrow">AL-CODIST</p>
-            <h1 class="brand-title">MusicGen</h1>
+            <h1 class="brand-title">MusicGenAI</h1>
           </div>
         </div>
 
@@ -61,15 +61,12 @@
           </dl>
         </div>
 
-        <!-- Accent Color -->
+        <!-- Accent Picker -->
         <div class="sidebar__section">
           <p class="sidebar__label">Accent Colour</p>
           <div class="swatch-row" id="swatchRow">
-            <button class="swatch swatch--active" data-accent="sunset" style="--c:#ff8a3d" title="Sunset Orange"></button>
-            <button class="swatch" data-accent="amber" style="--c:#ff9e2c" title="Amber Gold"></button>
-            <button class="swatch" data-accent="tangerine" style="--c:#f97316" title="Tangerine Flame"></button>
-            <button class="swatch" data-accent="rose" style="--c:#fb7185" title="Rose"></button>
-            <button class="swatch" data-accent="cyan" style="--c:#22d3ee" title="Electric Cyan"></button>
+            <button class="swatch swatch--active" data-accent="orange" style="--c:#ea580c" title="Orange"></button>
+            <button class="swatch" data-accent="cyan" style="--c:#22d3ee" title="Cyan"></button>
           </div>
         </div>
 
@@ -239,6 +236,8 @@
       </main>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/tone@14.8.49/build/Tone.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tonejs/midi@2.0.28/build/Midi.js" defer></script>
     <script src="/static/app.js" defer></script>
   </body>
 </html>
