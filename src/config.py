@@ -6,15 +6,15 @@ All paths, model hyperparameters, and training settings live here.
 
 import os
 from dataclasses import dataclass, field
-from typing import Optional
 
 # Project root (one level above src/)
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 # Data directories
-DATA_DIR       = os.path.join(ROOT_DIR, "data")
-MIDI_DIR       = os.path.join(DATA_DIR, "MIDI")
-PROCESSED_DIR  = os.path.join(DATA_DIR, "processed")
+DATA_DIR = os.path.join(ROOT_DIR, "data")
+MIDI_DIR = os.path.join(DATA_DIR, "MIDI")
+PROCESSED_DIR = os.path.join(DATA_DIR, "processed")
+
 
 def _pick_existing_dir(*candidates: str) -> str:
     """Return the first existing path from candidates, else the first candidate."""
@@ -38,7 +38,7 @@ MIXED_MIDI_DIR = _pick_existing_dir(
 )
 
 # Output directories
-MODELS_DIR  = os.path.join(ROOT_DIR, "models")
+MODELS_DIR = os.path.join(ROOT_DIR, "models")
 OUTPUTS_DIR = os.path.join(ROOT_DIR, "outputs")
 
 # Auto-create dirs at import time
@@ -47,6 +47,7 @@ for _d in [PROCESSED_DIR, MODELS_DIR, OUTPUTS_DIR]:
 
 # Supported modes
 MODES = ("hiphop", "retro", "mixed")
+
 
 # Preprocessing
 @dataclass
@@ -57,6 +58,7 @@ class PreprocessConfig:
     include_chords: bool = True
     duration_buckets: tuple = (0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0)
 
+
 # Model
 @dataclass
 class ModelConfig:
@@ -66,6 +68,7 @@ class ModelConfig:
     dropout: float = 0.3
     bidirectional: bool = False  # keep False for autoregressive generation
 
+
 # Training
 @dataclass
 class TrainConfig:
@@ -74,8 +77,8 @@ class TrainConfig:
     learning_rate: float = 0.001
     weight_decay: float = 1e-5
     lr_scheduler: str = "cosine"
-    lr_step_size: int = 20      
-    lr_gamma: float = 0.5       
+    lr_step_size: int = 20
+    lr_gamma: float = 0.5
     save_every: int = 10
     early_stop_patience: int = 15
     grad_clip: float = 5.0
@@ -83,6 +86,7 @@ class TrainConfig:
     seed: int = 42
     num_workers: int = 0  # Set to 0 for Windows compatibility, 4 for Linux/Mac
     val_split: float = 0.1
+
 
 # Generation
 @dataclass
@@ -95,6 +99,7 @@ class GenerateConfig:
     bpm: int = 90
     instrument_program: int = 0
     output_prefix: str = "generated"
+
 
 # Convenience: bundle everything
 @dataclass
@@ -115,16 +120,18 @@ class Config:
 
     def _refresh_paths(self):
         self.processed_path = os.path.join(PROCESSED_DIR, f"{self.mode}_sequences.pkl")
-        self.vocab_path      = os.path.join(PROCESSED_DIR, f"{self.mode}_vocab.pkl")
-        self.checkpoint_dir  = os.path.join(MODELS_DIR,   self.mode)
+        self.vocab_path = os.path.join(PROCESSED_DIR, f"{self.mode}_vocab.pkl")
+        self.checkpoint_dir = os.path.join(MODELS_DIR, self.mode)
         self.best_checkpoint = os.path.join(self.checkpoint_dir, "best_model.pt")
         os.makedirs(self.checkpoint_dir, exist_ok=True)
+
 
 def get_config(mode: str = "mixed") -> Config:
     assert mode in MODES, f"mode must be one of {MODES}, got '{mode}'"
     cfg = Config(mode=mode)
     cfg._refresh_paths()
     return cfg
+
 
 def midi_dirs_for_mode(mode: str) -> list:
     if mode == "mixed":
@@ -134,6 +141,6 @@ def midi_dirs_for_mode(mode: str) -> list:
 
     mapping = {
         "hiphop": [HIPHOP_MIDI_DIR],
-        "retro":  [RETRO_MIDI_DIR],
+        "retro": [RETRO_MIDI_DIR],
     }
     return mapping[mode]

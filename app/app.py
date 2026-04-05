@@ -65,7 +65,8 @@ def check_status(mode: str) -> dict:
 
     return {
         "midi_count": len(midi_files),
-        "preprocessed": os.path.exists(cfg.processed_path) and os.path.exists(cfg.vocab_path),
+        "preprocessed": os.path.exists(cfg.processed_path)
+        and os.path.exists(cfg.vocab_path),
         "trained": os.path.exists(cfg.best_checkpoint),
         "processed_path": cfg.processed_path,
         "vocab_path": cfg.vocab_path,
@@ -98,7 +99,11 @@ def run_step(script: str, extra_args=None) -> int:
 def step_preprocess(mode: str) -> None:
     script = os.path.join(SRC_DIR, "preprocess.py")
     rc = run_step(script, ["--mode", mode])
-    print(c("  Preprocessing complete.", GREEN) if rc == 0 else c("  Preprocessing failed!", RED))
+    print(
+        c("  Preprocessing complete.", GREEN)
+        if rc == 0
+        else c("  Preprocessing failed!", RED)
+    )
 
 
 def step_train(mode: str, extra=None) -> None:
@@ -112,7 +117,11 @@ def step_generate(mode: str, extra=None) -> None:
     script = os.path.join(SRC_DIR, "generate.py")
     args = ["--mode", mode] + (extra or [])
     rc = run_step(script, args)
-    print(c("  Generation complete.", GREEN) if rc == 0 else c("  Generation failed!", RED))
+    print(
+        c("  Generation complete.", GREEN)
+        if rc == 0
+        else c("  Generation failed!", RED)
+    )
 
 
 def step_web(host: str, port: int, reload_server: bool = False) -> None:
@@ -124,22 +133,22 @@ def step_web(host: str, port: int, reload_server: bool = False) -> None:
 
 
 BANNER = f"""
-{c('=======================================', CYAN)}
-{c('      AI Music Generator CLI', BOLD)}
-{c('      hiphop | retro | mixed', CYAN)}
-{c('=======================================', CYAN)}
+{c("=======================================", CYAN)}
+{c("      AI Music Generator CLI", BOLD)}
+{c("      hiphop | retro | mixed", CYAN)}
+{c("=======================================", CYAN)}
 """
 
 MENU = f"""
-{c('Select an option:', BOLD)}
-  {c('1', YELLOW)} - Preprocess MIDI data
-  {c('2', YELLOW)} - Train model
-  {c('3', YELLOW)} - Generate music
-  {c('4', YELLOW)} - Full pipeline (preprocess -> train -> generate)
-  {c('5', YELLOW)} - Change mode (current: {{mode}})
-  {c('6', YELLOW)} - Show status
-    {c('7', YELLOW)} - Launch web dashboard
-  {c('q', YELLOW)} - Quit
+{c("Select an option:", BOLD)}
+  {c("1", YELLOW)} - Preprocess MIDI data
+  {c("2", YELLOW)} - Train model
+  {c("3", YELLOW)} - Generate music
+  {c("4", YELLOW)} - Full pipeline (preprocess -> train -> generate)
+  {c("5", YELLOW)} - Change mode (current: {{mode}})
+  {c("6", YELLOW)} - Show status
+    {c("7", YELLOW)} - Launch web dashboard
+  {c("q", YELLOW)} - Quit
 """
 
 
@@ -188,19 +197,27 @@ def prompt_generate_options() -> list:
 def prompt_train_options() -> list:
     opts = []
     try:
-        resume = input(f"  Resume from checkpoint? [{c('n', YELLOW)}]: ").strip().lower()
+        resume = (
+            input(f"  Resume from checkpoint? [{c('n', YELLOW)}]: ").strip().lower()
+        )
         if resume in ("y", "yes"):
             opts += ["--resume"]
 
-        epochs = input(f"  Override epochs? [{c('blank = config default', YELLOW)}]: ").strip()
+        epochs = input(
+            f"  Override epochs? [{c('blank = config default', YELLOW)}]: "
+        ).strip()
         if epochs:
             opts += ["--epochs", epochs]
 
-        batch_size = input(f"  Override batch size? [{c('blank = config default', YELLOW)}]: ").strip()
+        batch_size = input(
+            f"  Override batch size? [{c('blank = config default', YELLOW)}]: "
+        ).strip()
         if batch_size:
             opts += ["--batch_size", batch_size]
 
-        lr = input(f"  Override learning rate? [{c('blank = config default', YELLOW)}]: ").strip()
+        lr = input(
+            f"  Override learning rate? [{c('blank = config default', YELLOW)}]: "
+        ).strip()
         if lr:
             opts += ["--lr", lr]
     except (EOFError, KeyboardInterrupt):
@@ -252,7 +269,9 @@ def run_menu(mode: str) -> None:
             print(c("  Unknown option.", RED))
 
 
-def run_noninteractive(mode: str, run: str, host: str, port: int, web_reload: bool) -> None:
+def run_noninteractive(
+    mode: str, run: str, host: str, port: int, web_reload: bool
+) -> None:
     steps = {
         "preprocess": step_preprocess,
         "train": step_train,
@@ -261,7 +280,12 @@ def run_noninteractive(mode: str, run: str, host: str, port: int, web_reload: bo
         "web": None,
     }
     if run not in steps:
-        print(c(f"Unknown --run value '{run}'. Use: preprocess | train | generate | full_pipeline | web", RED))
+        print(
+            c(
+                f"Unknown --run value '{run}'. Use: preprocess | train | generate | full_pipeline | web",
+                RED,
+            )
+        )
         sys.exit(1)
     if run == "full_pipeline":
         step_preprocess(mode)
@@ -279,7 +303,12 @@ def parse_args() -> argparse.Namespace:
         description="Music Generation App - interactive CLI.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    parser.add_argument("--mode", choices=list(MODES), default="mixed", help="Dataset mode to start with")
+    parser.add_argument(
+        "--mode",
+        choices=list(MODES),
+        default="mixed",
+        help="Dataset mode to start with",
+    )
     parser.add_argument(
         "--run",
         choices=["preprocess", "train", "generate", "full_pipeline", "web"],
@@ -288,7 +317,9 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--host", default="127.0.0.1", help="Host for --run web")
     parser.add_argument("--port", type=int, default=8000, help="Port for --run web")
-    parser.add_argument("--web_reload", action="store_true", help="Enable auto-reload for --run web")
+    parser.add_argument(
+        "--web_reload", action="store_true", help="Enable auto-reload for --run web"
+    )
     return parser.parse_args()
 
 

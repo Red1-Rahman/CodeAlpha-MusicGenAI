@@ -11,7 +11,7 @@ import threading
 import uuid
 from collections import deque
 from datetime import datetime
-from typing import Any, Deque, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse
@@ -80,7 +80,12 @@ def _iso_now() -> str:
 
 def _build_steps(req: JobRequest) -> List[List[str]]:
     def preprocess_cmd() -> List[str]:
-        return [sys.executable, os.path.join(SRC_DIR, "preprocess.py"), "--mode", req.mode]
+        return [
+            sys.executable,
+            os.path.join(SRC_DIR, "preprocess.py"),
+            "--mode",
+            req.mode,
+        ]
 
     def train_cmd() -> List[str]:
         cmd = [sys.executable, os.path.join(SRC_DIR, "train.py"), "--mode", req.mode]
@@ -167,7 +172,11 @@ def _worker(job_id: str, steps: List[List[str]]) -> None:
         job["current_step"] = 0
 
     step_names = [
-        "preprocess" if "preprocess.py" in s[1] else "train" if "train.py" in s[1] else "generate"
+        "preprocess"
+        if "preprocess.py" in s[1]
+        else "train"
+        if "train.py" in s[1]
+        else "generate"
         for s in steps
     ]
 
@@ -212,7 +221,8 @@ def _project_status(mode: str) -> Dict[str, Any]:
     return {
         "mode": mode,
         "midi_count": len(midi_files),
-        "preprocessed": os.path.exists(cfg.processed_path) and os.path.exists(cfg.vocab_path),
+        "preprocessed": os.path.exists(cfg.processed_path)
+        and os.path.exists(cfg.vocab_path),
         "trained": os.path.exists(cfg.best_checkpoint),
         "processed_path": cfg.processed_path,
         "vocab_path": cfg.vocab_path,
@@ -242,7 +252,9 @@ def meta() -> Dict[str, Any]:
 
 
 @app.get("/api/status")
-def status(mode: Literal["hiphop", "retro", "mixed"] = Query(default="mixed")) -> Dict[str, Any]:
+def status(
+    mode: Literal["hiphop", "retro", "mixed"] = Query(default="mixed"),
+) -> Dict[str, Any]:
     return _project_status(mode)
 
 
@@ -298,7 +310,9 @@ def create_job(req: JobRequest) -> JobSummary:
 @app.get("/api/jobs", response_model=List[JobSummary])
 def list_jobs(limit: int = Query(default=20, ge=1, le=200)) -> List[JobSummary]:
     with _jobs_lock:
-        items = sorted(_jobs.values(), key=lambda j: j["created_at"], reverse=True)[:limit]
+        items = sorted(_jobs.values(), key=lambda j: j["created_at"], reverse=True)[
+            :limit
+        ]
     return [
         JobSummary(
             id=j["id"],
@@ -337,7 +351,9 @@ def get_job(job_id: str) -> Dict[str, Any]:
 
 
 @app.get("/api/jobs/{job_id}/logs")
-def get_job_logs(job_id: str, tail: int = Query(default=200, ge=1, le=2000)) -> Dict[str, Any]:
+def get_job_logs(
+    job_id: str, tail: int = Query(default=200, ge=1, le=2000)
+) -> Dict[str, Any]:
     with _jobs_lock:
         if job_id not in _jobs:
             raise HTTPException(status_code=404, detail="Job not found")
@@ -389,7 +405,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run MusicGen dashboard API server")
     parser.add_argument("--host", default="127.0.0.1", help="Host interface to bind")
     parser.add_argument("--port", type=int, default=8000, help="TCP port to bind")
-    parser.add_argument("--reload", action="store_true", help="Enable auto-reload (development only)")
+    parser.add_argument(
+        "--reload", action="store_true", help="Enable auto-reload (development only)"
+    )
     args = parser.parse_args()
 
     uvicorn.run(app, host=args.host, port=args.port, reload=args.reload)

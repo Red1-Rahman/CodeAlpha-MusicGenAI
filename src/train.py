@@ -110,7 +110,9 @@ class MusicLSTM(nn.Module):
         return sum(p.numel() for p in self.parameters() if p.requires_grad)
 
 
-def build_dataloaders(sequences: List[List[int]], cfg: Config) -> Tuple[DataLoader, DataLoader]:
+def build_dataloaders(
+    sequences: List[List[int]], cfg: Config
+) -> Tuple[DataLoader, DataLoader]:
     dataset = MusicDataset(sequences)
     val_size = max(1, int(len(dataset) * cfg.train.val_split))
     trn_size = len(dataset) - val_size
@@ -272,7 +274,9 @@ def train(mode: str, cli_overrides: argparse.Namespace) -> None:
         optimizer.load_state_dict(ckpt["optimizer_state"])
         start_epoch = ckpt.get("epoch", 0) + 1
         best_val_loss = ckpt.get("val_loss", float("inf"))
-        logger.info("Resumed from epoch %s (val_loss=%.4f)", start_epoch - 1, best_val_loss)
+        logger.info(
+            "Resumed from epoch %s (val_loss=%.4f)", start_epoch - 1, best_val_loss
+        )
 
     logger.info("=" * 60)
     logger.info("Training mode=%s epochs=%s device=%s", mode, cfg.train.epochs, device)
@@ -282,7 +286,9 @@ def train(mode: str, cli_overrides: argparse.Namespace) -> None:
 
     for epoch in range(start_epoch, cfg.train.epochs + 1):
         current_lr = optimizer.param_groups[0]["lr"]
-        logger.info("\\n-- Epoch %s/%s  lr=%.2e --", epoch, cfg.train.epochs, current_lr)
+        logger.info(
+            "\\n-- Epoch %s/%s  lr=%.2e --", epoch, cfg.train.epochs, current_lr
+        )
 
         with Timer() as t:
             trn_loss = run_epoch(
@@ -345,7 +351,10 @@ def train(mode: str, cli_overrides: argparse.Namespace) -> None:
             save_checkpoint(ckpt_state, cfg.best_checkpoint, is_best=False)
             logger.info("  New best val_loss=%.4f", best_val_loss)
 
-        if cfg.train.early_stop_patience > 0 and patience_ctr >= cfg.train.early_stop_patience:
+        if (
+            cfg.train.early_stop_patience > 0
+            and patience_ctr >= cfg.train.early_stop_patience
+        ):
             logger.info(
                 "Early stopping triggered - no improvement for %s epochs.",
                 cfg.train.early_stop_patience,
@@ -378,10 +387,26 @@ def parse_args() -> argparse.Namespace:
         default="mixed",
         help="Which dataset to train on",
     )
-    parser.add_argument("--epochs", "-e", type=int, default=None, help="Override number of training epochs")
-    parser.add_argument("--batch_size", "--batch", type=int, default=None, help="Override batch size")
-    parser.add_argument("--lr", "--learning_rate", type=float, default=None, help="Override learning rate")
-    parser.add_argument("--resume", action="store_true", help="Resume from best checkpoint if available")
+    parser.add_argument(
+        "--epochs",
+        "-e",
+        type=int,
+        default=None,
+        help="Override number of training epochs",
+    )
+    parser.add_argument(
+        "--batch_size", "--batch", type=int, default=None, help="Override batch size"
+    )
+    parser.add_argument(
+        "--lr",
+        "--learning_rate",
+        type=float,
+        default=None,
+        help="Override learning rate",
+    )
+    parser.add_argument(
+        "--resume", action="store_true", help="Resume from best checkpoint if available"
+    )
     return parser.parse_args()
 
 

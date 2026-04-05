@@ -14,7 +14,14 @@ import torch
 SRC_DIR = os.path.abspath(os.path.dirname(__file__))
 sys.path.insert(0, SRC_DIR)
 from config import get_config, Config, OUTPUTS_DIR
-from utils import get_logger, get_device, load_vocab, load_checkpoint, sample_token, Timer
+from utils import (
+    get_logger,
+    get_device,
+    load_vocab,
+    load_checkpoint,
+    sample_token,
+    Timer,
+)
 
 logger = get_logger("Generate")
 
@@ -37,7 +44,9 @@ def _load_model(cfg: Config, device: torch.device):
     model = MusicLSTM(vocab_size, cfg).to(device)
 
     if not os.path.exists(cfg.best_checkpoint):
-        logger.error("No checkpoint found at %s. Train the model first.", cfg.best_checkpoint)
+        logger.error(
+            "No checkpoint found at %s. Train the model first.", cfg.best_checkpoint
+        )
         sys.exit(1)
 
     ckpt = load_checkpoint(cfg.best_checkpoint, device)
@@ -46,7 +55,12 @@ def _load_model(cfg: Config, device: torch.device):
 
     epoch = ckpt.get("epoch", "?")
     val_loss = ckpt.get("val_loss", float("nan"))
-    logger.info("Model loaded - epoch=%s val_loss=%.4f vocab_size=%s", epoch, val_loss, vocab_size)
+    logger.info(
+        "Model loaded - epoch=%s val_loss=%.4f vocab_size=%s",
+        epoch,
+        val_loss,
+        vocab_size,
+    )
     return model, vocab, idx2token
 
 
@@ -96,7 +110,9 @@ def generate_sequence(
         logits, hidden = model(last_token, hidden)
         logits = logits[:, -1, :]
 
-        next_id = sample_token(logits, temperature=temperature, top_k=top_k, top_p=top_p)
+        next_id = sample_token(
+            logits, temperature=temperature, top_k=top_k, top_p=top_p
+        )
         generated.append(next_id)
 
     return generated
@@ -200,7 +216,9 @@ def generate(mode: str, args: argparse.Namespace) -> None:
         seed_ids = _file_seed(args.seed_file, gc.seed_length, vocab, cfg)
     else:
         if not os.path.exists(cfg.processed_path):
-            logger.error("No processed sequences found and no seed file given. Run preprocess.py first.")
+            logger.error(
+                "No processed sequences found and no seed file given. Run preprocess.py first."
+            )
             sys.exit(1)
         seed_ids = _random_seed(cfg.processed_path, gc.seed_length)
 
@@ -252,7 +270,9 @@ def generate(mode: str, args: argparse.Namespace) -> None:
     note_events = [
         t
         for t in [idx2token.get(i) for i in token_ids]
-        if t and not t.startswith("DUR_") and t not in ("<PAD>", "<SOS>", "<EOS>", "REST")
+        if t
+        and not t.startswith("DUR_")
+        and t not in ("<PAD>", "<SOS>", "<EOS>", "REST")
     ]
     logger.info("Note/chord events generated: %s", len(note_events))
     logger.info("Done! Output: %s", output_path)
@@ -272,15 +292,50 @@ def parse_args() -> argparse.Namespace:
         default="mixed",
         help="Which trained model to use",
     )
-    parser.add_argument("--num_tokens", "--length", "--len", dest="num_tokens", type=int, default=None, help="Tokens to generate")
-    parser.add_argument("--temperature", "--temp", dest="temperature", type=float, default=None, help="Sampling temperature")
-    parser.add_argument("--top_k", type=int, default=None, help="Top-k sampling (0=off)")
-    parser.add_argument("--top_p", type=float, default=None, help="Nucleus sampling (1.0=off)")
+    parser.add_argument(
+        "--num_tokens",
+        "--length",
+        "--len",
+        dest="num_tokens",
+        type=int,
+        default=None,
+        help="Tokens to generate",
+    )
+    parser.add_argument(
+        "--temperature",
+        "--temp",
+        dest="temperature",
+        type=float,
+        default=None,
+        help="Sampling temperature",
+    )
+    parser.add_argument(
+        "--top_k", type=int, default=None, help="Top-k sampling (0=off)"
+    )
+    parser.add_argument(
+        "--top_p", type=float, default=None, help="Nucleus sampling (1.0=off)"
+    )
     parser.add_argument("--bpm", type=int, default=None, help="Output MIDI BPM")
-    parser.add_argument("--seed_length", type=int, default=None, help="Seed sequence length")
-    parser.add_argument("--seed_file", type=str, default=None, help="Path to a seed MIDI file")
-    parser.add_argument("--output_filename", type=str, default=None, help="Optional output MIDI filename")
-    parser.add_argument("--output_dir", "--out", dest="output_dir", type=str, default=None, help="Where to save the MIDI")
+    parser.add_argument(
+        "--seed_length", type=int, default=None, help="Seed sequence length"
+    )
+    parser.add_argument(
+        "--seed_file", type=str, default=None, help="Path to a seed MIDI file"
+    )
+    parser.add_argument(
+        "--output_filename",
+        type=str,
+        default=None,
+        help="Optional output MIDI filename",
+    )
+    parser.add_argument(
+        "--output_dir",
+        "--out",
+        dest="output_dir",
+        type=str,
+        default=None,
+        help="Where to save the MIDI",
+    )
     return parser.parse_args()
 
 
