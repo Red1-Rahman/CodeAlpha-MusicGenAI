@@ -10,10 +10,15 @@
   --text-muted:   #5a7a9a;
   --text-dim:     #3a5570;
   --accent-orange:#ea580c;
-  --accent-hover: #c2410c;
+  --accent-orange-hover:#c2410c;
+  --accent-cyan:  #22d3ee;
+  --accent-cyan-hover:#0891b2;
   --accent:       var(--accent-orange);
-  --accent-dim:   rgba(234,88,12,.12);
-  --accent-glow:  rgba(234,88,12,.35);
+  --accent-hover: var(--accent-orange-hover);
+  --accent-dim:   color-mix(in srgb, var(--accent) 12%, transparent);
+  --accent-glow:  color-mix(in srgb, var(--accent) 35%, transparent);
+  --ambient-orb-2:#3b82f6;
+  --ambient-orb-3:#8b5cf6;
   --ok:           #34d399;
   --ok-dim:       rgba(52,211,153,.12);
   --err:          #f87171;
@@ -70,13 +75,13 @@ html, body {
 .ambient__orb--2 {
   width: 400px; height: 400px;
   bottom: -80px; right: 20%;
-  background: radial-gradient(circle, #3b82f6 0%, transparent 70%);
+  background: radial-gradient(circle, var(--ambient-orb-2) 0%, transparent 70%);
   animation: drift2 22s ease-in-out infinite alternate;
 }
 .ambient__orb--3 {
   width: 300px; height: 300px;
   top: 40%; right: -60px;
-  background: radial-gradient(circle, #8b5cf6 0%, transparent 70%);
+  background: radial-gradient(circle, var(--ambient-orb-3) 0%, transparent 70%);
   animation: drift1 14s ease-in-out infinite alternate-reverse;
 }
 .ambient__grid {
@@ -283,11 +288,13 @@ html, body {
   height: 26px;
   border-radius: 50%;
   border: 2px solid transparent;
-  background: var(--c, #888);
+  background: var(--c, var(--text-dim));
   cursor: pointer;
   transition: transform var(--transition), border-color var(--transition), box-shadow var(--transition);
   outline: none;
 }
+.swatch--orange { --c: var(--accent-orange); }
+.swatch--cyan { --c: var(--accent-cyan); }
 .swatch:hover { transform: scale(1.15); }
 .swatch--active {
   border-color: var(--text);

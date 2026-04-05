@@ -65,8 +65,8 @@
         <div class="sidebar__section">
           <p class="sidebar__label">Accent Colour</p>
           <div class="swatch-row" id="swatchRow">
-            <button class="swatch swatch--active" data-accent="orange" style="--c:#ea580c" title="Orange"></button>
-            <button class="swatch" data-accent="cyan" style="--c:#22d3ee" title="Cyan"></button>
+            <button class="swatch swatch--orange swatch--active" data-accent="orange" title="Orange"></button>
+            <button class="swatch swatch--cyan" data-accent="cyan" title="Cyan"></button>
           </div>
         </div>
 
@@ -129,15 +129,15 @@
               </label>
               <label class="opt-label">
                 <span>Epochs</span>
-                <input id="trainEpochs" class="opt-input" type="number" min="1" placeholder="default" />
+                <input id="trainEpochs" class="opt-input" type="number" min="1" step="1" placeholder="100" />
               </label>
               <label class="opt-label">
                 <span>Batch Size</span>
-                <input id="trainBatch" class="opt-input" type="number" min="1" placeholder="default" />
+                <input id="trainBatch" class="opt-input" type="number" min="1" step="1" placeholder="64" />
               </label>
               <label class="opt-label full-span">
                 <span>Learning Rate</span>
-                <input id="trainLr" class="opt-input" type="number" min="0" step="0.0001" placeholder="default" />
+                <input id="trainLr" class="opt-input" type="number" min="0.000001" step="any" placeholder="0.001" />
               </label>
             </div>
           </section>
@@ -150,27 +150,27 @@
             <div class="opts-grid">
               <label class="opt-label">
                 <span>Tokens</span>
-                <input id="genTokens" class="opt-input" type="number" min="1" placeholder="256" />
+                <input id="genTokens" class="opt-input" type="number" min="1" step="1" placeholder="256" />
               </label>
               <label class="opt-label">
                 <span>Temperature</span>
-                <input id="genTemp" class="opt-input" type="number" min="0" step="0.1" placeholder="1.0" />
+                <input id="genTemp" class="opt-input" type="number" min="0.01" step="0.01" placeholder="1.0" />
               </label>
               <label class="opt-label">
                 <span>Top-k</span>
-                <input id="genTopK" class="opt-input" type="number" min="0" placeholder="10" />
+                <input id="genTopK" class="opt-input" type="number" min="0" step="1" placeholder="10" />
               </label>
               <label class="opt-label">
                 <span>Top-p</span>
-                <input id="genTopP" class="opt-input" type="number" min="0" max="1" step="0.01" placeholder="0.9" />
+                <input id="genTopP" class="opt-input" type="number" min="0.01" max="1" step="0.01" placeholder="0.9" />
               </label>
               <label class="opt-label">
                 <span>BPM</span>
-                <input id="genBpm" class="opt-input" type="number" min="30" max="300" placeholder="90" />
+                <input id="genBpm" class="opt-input" type="number" min="30" max="300" step="1" placeholder="90" />
               </label>
               <label class="opt-label">
                 <span>Seed Length</span>
-                <input id="genSeedLen" class="opt-input" type="number" min="1" placeholder="32" />
+                <input id="genSeedLen" class="opt-input" type="number" min="1" step="1" placeholder="32" />
               </label>
               <label class="opt-label full-span">
                 <span>Seed MIDI Path <em>(optional)</em></span>

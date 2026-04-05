@@ -38,16 +38,12 @@ const playerMeta      = $("playerMeta");
 /* ── Accent picker ────────────────────────────────────────────────────── */
 const ACCENTS = {
   orange: {
-    accent: "#ea580c",
-    hover: "#c2410c",
-    dim: "rgba(234,88,12,.12)",
-    glow: "rgba(234,88,12,.35)",
+    accent: "var(--accent-orange)",
+    hover: "var(--accent-orange-hover)",
   },
   cyan: {
-    accent: "#22d3ee",
-    hover: "#0891b2",
-    dim: "rgba(34,211,238,.12)",
-    glow: "rgba(34,211,238,.35)",
+    accent: "var(--accent-cyan)",
+    hover: "var(--accent-cyan-hover)",
   },
 };
 
@@ -56,8 +52,6 @@ function applyAccent(name) {
   const root = document.documentElement.style;
   root.setProperty("--accent", tone.accent);
   root.setProperty("--accent-hover", tone.hover);
-  root.setProperty("--accent-dim", tone.dim);
-  root.setProperty("--accent-glow", tone.glow);
 }
 
 const swatchRow = $("swatchRow");
@@ -86,6 +80,14 @@ function parseNum(value, fn) {
   if (value === "" || value == null) return null;
   const n = fn(value);
   return Number.isNaN(n) ? null : n;
+}
+
+function sanitizeOutputFilename(value) {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const base = trimmed.split(/[\\/]+/).filter(Boolean).pop() || "";
+  return base || null;
 }
 
 async function fetchJson(url, opts = {}) {
@@ -236,8 +238,18 @@ function collectGenerateOptions() {
     bpm:          parseNum($("genBpm").value,     Number.parseInt),
     seed_length:  parseNum($("genSeedLen").value, Number.parseInt),
     seed_file:    $("genSeedFile").value.trim() || null,
-    output_filename: $("genOutputFilename").value.trim() || null,
+    output_filename: sanitizeOutputFilename($("genOutputFilename").value),
   };
+}
+
+const outputFilenameInput = $("genOutputFilename");
+if (outputFilenameInput) {
+  outputFilenameInput.addEventListener("input", () => {
+    const sanitized = sanitizeOutputFilename(outputFilenameInput.value) || "";
+    if (sanitized !== outputFilenameInput.value) {
+      outputFilenameInput.value = sanitized;
+    }
+  });
 }
 
 /* ── Create Job ────────────────────────────────────────────────────────── */
