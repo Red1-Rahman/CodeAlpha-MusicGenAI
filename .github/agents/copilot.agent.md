@@ -86,6 +86,30 @@ appearance: none;
 - **Accent-dependent alpha values** must use `color-mix(in srgb, var(--accent) X%, ...)` so they respond correctly when the accent colour switches at runtime.
 - **No frameworks.** The frontend is vanilla HTML + CSS + JS only. No npm, no build steps, no CDN frameworks beyond what is already present.
 
+#### Frontend Input Validation
+
+Every user-facing input must have `min`, `max`, and `step` attributes that exactly match the backend `pydantic` validation in `web_server.py`. If the backend rejects a value, the frontend must make that value unenterable — not just show an error after submission.
+
+Current validated ranges that must be kept in sync:
+
+| Field       | Min  | Max | Notes                                |
+| ----------- | ---- | --- | ------------------------------------ |
+| BPM         | 30   | 300 | `GenerateOptions` in `web_server.py` |
+| Temperature | 0.01 | —   | Must be `> 0`, use `min="0.01"`      |
+| Top-p       | 0.01 | 1.0 | Must be `> 0` and `<= 1`             |
+| Top-k       | 0    | —   | Must be `>= 0`                       |
+| Epochs      | 1    | —   | Must be `>= 1`                       |
+| Batch size  | 1    | —   | Must be `>= 1`                       |
+| Num tokens  | 1    | —   | Must be `>= 1`                       |
+| Seed length | 1    | —   | Must be `>= 1`                       |
+
+**Rules:**
+
+- When you add or change a field in `GenerateOptions` or `TrainOptions` in `web_server.py`, you must update the corresponding HTML input attributes in `app/web/index.html` in the same task — never one without the other.
+- Use `placeholder` text to show the default value so users know what blank means (e.g. `placeholder="90"` for BPM).
+- Output filename input must sanitise to basename only — no path separators allowed. Strip `/`, `\` client-side before submission.
+- Never rely solely on backend validation for UX — a `400` error returned after submission is a worse experience than a disabled or bounded input.
+
 ### 8. MIDI Generation Rules
 
 - **Never fix generation quality issues by modifying `preprocess.py` or training data.** All output quality fixes belong in `generate.py` at decode/render time only.
